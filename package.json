@@ -4,7 +4,8 @@
   "description": "A simple API to view room bookings",
   "main": "app.js",
   "scripts": {
-    "test": "testing"
+    "test": "testing",
+    "start": "npm start"
   },
   "repository": {
     "type": "git",
