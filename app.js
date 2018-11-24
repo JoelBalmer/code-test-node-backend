@@ -4,7 +4,7 @@ var bodyParser = require("body-parser");
 
 // Express server setup
 var app = express();
-var port = process.env.PORT || 3001;
+var port = process.env.PORT || 3000;
 app.listen(port, function() {
     console.log(`Server running on port: ` + port);
 });
