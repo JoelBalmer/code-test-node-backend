@@ -22,20 +22,50 @@ app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Rooms routes
-app.get("/api/room/", function(req, res, next) {
-    var entries =
-    [
-        {
+// Dummy data
+var entries = [
+    {
+        "id": "abc123",
+        "name": "Meeting Room 1",
+        "available": true
+    },
+    {
+        "id": "def456",
+        "name": "Meeting Room 2",
+        "available": true
+    }
+];
+
+var usage = [
+    {
+        "time": "2017-01-01T10:02:15Z",
+        "user": "Jeff",
+        "room": {
             "id": "abc123",
             "name": "Meeting Room 1",
-            "available": true
-        },
-        {
+        "available": true
+    },
+    {
+        "time": "2017-01-01T11:02:15Z",
+        "user": "Bob",
+        "room": {
             "id": "def456",
             "name": "Meeting Room 2",
-            "available": true
-        }
-    ]
+        "available": false
+    }
+];
+
+// Get all rooms
+app.get("/api/room/", function(req, res, next) {
     res.status(200).json(entries);
+});
+
+// Get single room
+app.get("/api/room/:id", function(req, res, next) {
+    res.status(200).json(entries[0]);
+});
+
+// Get usage
+app.get("/api/room/usage", function(req, res, next) {
+    res.status(200).json(usage[0]);
 });
