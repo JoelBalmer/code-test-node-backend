@@ -1,0 +1,20 @@
+{
+  "name": "roombooker",
+  "version": "1.0.0",
+  "description": "A simple API to view room bookings",
+  "main": "app.js",
+  "scripts": {
+    "test": "testing"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://Joel-Balmer@bitbucket.org/Joel-Balmer/roombooker.git"
+  },
+  "author": "Joel Balmer",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/Joel-Balmer/roombooker#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "helmet": "^3.15.0"
+  }
+}
