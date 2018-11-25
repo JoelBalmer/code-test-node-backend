@@ -59,6 +59,9 @@ var port = process.env.PORT || 3000;
 app.listen(port, function() {
   console.log("Server running on port: " + port);
 });
+app.use(express.static("public"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // Handle Express Basic xxx authentication
 app.use(
@@ -71,9 +74,6 @@ app.use(
   })
 );
 
-// Show welcome page
-app.use(express.static("public"));
-
 // Use Helmet to protect against well known vulnerabilities
 app.use(helmet());
 
@@ -81,11 +81,9 @@ app.use(helmet());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
 // Get all rooms
-app.get("/api/room/", function(req, res, next) {
+app.get("/api/room/", getRoomsRoute);
+function getRoomsRoute(req, res, next) {
   var client = new MongoClient(uri);
   client.connect(function(err) {
     if (err) {
@@ -100,10 +98,11 @@ app.get("/api/room/", function(req, res, next) {
       client.close();
     });
   });
-});
+}
 
 // Get usage
-app.get("/api/room/usage/", function(req, res, next) {
+app.get("/api/room/usage/", getUsageRoute);
+function getUsageRoute(req, res, next) {
   // Check user permissions
   if (req.auth.user !== "admin") {
     var err = new Error("Not an admin");
@@ -127,7 +126,7 @@ app.get("/api/room/usage/", function(req, res, next) {
       client.close();
     });
   });
-});
+}
 
 // Error handling
 function errorHandler(err, req, res, next) {
