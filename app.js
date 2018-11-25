@@ -1,21 +1,7 @@
-var MongoClient = require('mongodb').MongoClient;
+var MongoClient = require("mongodb").MongoClient;
 var express = require("express");
 var helmet = require("helmet");
 var bodyParser = require("body-parser");
-
-// Dummy data
-var rooms = [
-    {
-        "id": "abc123",
-        "name": "Meeting Room 1",
-        "available": true
-    },
-    {
-        "id": "def456",
-        "name": "Meeting Room 2",
-        "available": true
-    }
-];
 
 var usage = [
     {
@@ -23,7 +9,8 @@ var usage = [
         "user": "Jeff",
         "room": {
             "id": "abc123",
-            "name": "Meeting Room 1",
+            "name": "Meeting Room 1"
+        },
         "available": true
     },
     {
@@ -31,72 +18,77 @@ var usage = [
         "user": "Bob",
         "room": {
             "id": "def456",
-            "name": "Meeting Room 2",
+            "name": "Meeting Room 2"
+        },
         "available": false
     }
 ];
 
 // Mongo setup
-var uri = "mongodb://admin:jeeves-567-HELLO!@ds115854.mlab.com:15854/roombook";
-var dbName = 'roombooker';
-var client = new MongoClient(uri);
+var uri = "mongodb://admin:jeeves-567-HELLO!@ds115854.mlab.com:15854/roombooker";
+var dbName = "roombooker";
 
-// Connect to MongoDB
-client.connect(function (err) {
-	if (err) {
-        console.log("Error connecting to MongoDB: " + err);
-        return;
-    }
-	console.log('Connected successfully to MongoDB');
-    const db = client.db(dbName);
-    
-    // Get rooms
-	getRooms(db, function() {
-        insertDocuments(db, function () {
-            client.close();
-	    });
-	});
-});
-
-var getRooms = function (db, callback) {
- 	var collection = db.collection('rooms');
+// Database functions
+function getRooms(db, callback) {
+ 	var collection = db.collection("rooms");
  	collection.find({}).toArray(function (err, rooms) {
  		if (err) {
             console.log("Error finding rooms: " + err);
             return;
         }
         
- 		console.log('Found the following rooms');
+ 		console.log("Found the following rooms");
  		console.log(rooms);
  		callback(rooms);
  	});
-};
+}
 
-// Add documents
-var insertRooms = function (db, callback) {
-	// Get the documents collection
-	var collection = db.collection('rooms');
-	collection.insertMany(rooms, function (
-		err,
-		result
-	) {
+function insertRooms(db, callback) {
+	var collection = db.collection("rooms");
+	collection.insertMany(rooms, function (err, result) {
 		if (err) {
             console.log("Error inserting rooms: " + err);
             return;
         }
-		console.log('Inserted 3 documents into the collection');
+		console.log("Inserted 3 documents into the collection");
         console.log(result.result.n);
         console.log(result.ops.length);
 		callback(result);
 	});
-};
+}
+
+function getUsage(db, callback) {
+    var collection = db.collection("usage");
+    console.log(collection);
+	collection.find({}).toArray(function (err, usage) {
+        if (err) {
+           console.log("Error finding usage: " + err);
+           return;
+        }
+       
+        console.log("Found the following usage");
+        console.log(usage);
+        callback(usage);
+    });
+}
 
 // Express server setup
 var app = express();
 var port = process.env.PORT || 3000;
 app.listen(port, function() {
-    console.log(`Server running on port: ` + port);
-});
+    console.log("Server running on port: " + port);
+}); 
+
+// Error handling
+app.use(errorHandler);
+function errorHandler(err, req, res, next) {
+    if (!err.status) {
+      err.status = 500;
+    }
+  
+    res.status(err.status).send(err.message);
+    next(err);
+}
 
 // Show welcome page
 app.use(express.static("public"));
@@ -111,18 +103,48 @@ app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Routes
 // Get all rooms
 app.get("/api/room/", function(req, res, next) {
-    res.status(200).json(rooms);
-});
+    var client = new MongoClient(uri);
+    client.connect(function (err) {
+        if (err) {
+            console.log("Error connecting to MongoDB: " + err);
+            return;
+        }
+        console.log("Connected successfully to MongoDB");
+        var db = client.db(dbName);
 
-// Get single room
-app.get("/api/room/:id", function(req, res, next) {
-    res.status(200).json(rooms[0]);
+        getRooms(db, function(rooms) {
+            res.status(200).json(rooms);
+            client.close();
+        });
+    });
 });
 
 // Get usage
-app.get("/api/room/usage", function(req, res, next) {
-    res.status(200).json(usage[0]);
+app.get("/api/room/usage/", function(req, res, next) {
+    var client = new MongoClient(uri);
+    client.connect(function (err) {
+        if (err) {
+            console.log("Error connecting to MongoDB: " + err);
+            return;
+        }
+        console.log("Connected successfully to MongoDB");
+        var db = client.db(dbName);
+
+        getUsage(db, function(usage) {
+            res.status(200).json(usage);
+            client.close();
+        });
+    });
+});
+
+// Get single room
+// app.get("/api/room/:id", function(req, res, next) {
+//     res.status(200).json(rooms[0]);
+// });
+
+// Handle 404 not found
+app.use(function (req, res, next) {
+    res.status(404).send("Sorry can't find that!");
 });
