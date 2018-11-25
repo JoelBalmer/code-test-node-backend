@@ -60,13 +60,14 @@ app.listen(port, function() {
   console.log("Server running on port: " + port);
 });
 
-// Setup Express Basic xxx auth
+// Handle Express Basic xxx authentication
 app.use(
   basicAuth({
     users: {
       user: "secret",
       admin: "supersecret"
-    }
+    },
+    unauthorizedResponse: {"message" : "Not a user"}
   })
 );
 
@@ -104,11 +105,8 @@ app.get("/api/room/", function(req, res, next) {
 // Get usage
 app.get("/api/room/usage/", function(req, res, next) {
   // Check user permissions
-
   if (req.auth.user !== "admin") {
-    //res.status(401).json({ message: "Not an admin" });
-    var err = new Error();
-    err.message = "Not an admin";
+    var err = new Error("Not an admin");
     err.status = 401;
     next(err);
     return;
