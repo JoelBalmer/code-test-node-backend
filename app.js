@@ -63,7 +63,7 @@ function getRoomsRoute(req, res, next) {
 }
 
 // Get single room
-app.get("/api/room/:id", function(req, res, next){
+app.get("/api/room:id", function(req, res, next){
   var client = new MongoClient(uri);
   client.connect(function(err) {
     if (err) {
@@ -162,22 +162,29 @@ function insertRoom(db, callback) {
   });
 }
 
-function getUsage(db, start, end, id, callback) {
+function getUsage(db, start, end, callback) {
   // Convert dates
-  var startDate = new Date(start);
-  var endDate = new Date(end);
+  var startDate = new Date(start).toISOString();
+  var endDate = new Date(end).toISOString();
 
   var collection = db.collection("usage");
   console.log(collection);
-  collection.find({}).toArray(function(err, usage) {
-    if (err) {
-      console.log("Error finding usage: " + err);
-      return;
-    }
+  collection
+    .find({
+      "time" : { 
+        $gte: startDate,
+        $lte: endDate
+      },
+    })
+    .toArray(function(err, usage) {
+      if (err) {
+        console.log("Error finding usage: " + err);
+        return;
+      }
 
-    console.log("Found the following usage");
-    console.log(usage);
-    callback(usage);
+      console.log("Found the following usage");
+      console.log(usage);
+      callback(usage);
   });
 }
 
