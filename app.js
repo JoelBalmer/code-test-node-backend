@@ -9,50 +9,6 @@ var uri =
   "mongodb://admin:jeeves-567-HELLO!@ds115854.mlab.com:15854/roombooker";
 var dbName = "roombooker";
 
-// Database functions
-function getRooms(db, callback) {
-  var collection = db.collection("rooms");
-  collection.find({}).toArray(function(err, rooms) {
-    if (err) {
-      console.log("Error finding rooms: " + err);
-      return;
-    }
-
-    console.log("Found the following rooms");
-    console.log(rooms);
-    callback(rooms);
-  });
-}
-
-function insertRooms(db, callback) {
-  var collection = db.collection("rooms");
-  collection.insertMany(rooms, function(err, result) {
-    if (err) {
-      console.log("Error inserting rooms: " + err);
-      return;
-    }
-    console.log("Inserted 3 documents into the collection");
-    console.log(result.result.n);
-    console.log(result.ops.length);
-    callback(result);
-  });
-}
-
-function getUsage(db, callback) {
-  var collection = db.collection("usage");
-  console.log(collection);
-  collection.find({}).toArray(function(err, usage) {
-    if (err) {
-      console.log("Error finding usage: " + err);
-      return;
-    }
-
-    console.log("Found the following usage");
-    console.log(usage);
-    callback(usage);
-  });
-}
-
 // Express server setup
 var app = express();
 var port = process.env.PORT || 3000;
@@ -94,14 +50,44 @@ function getRoomsRoute(req, res, next) {
     var db = client.db(dbName);
 
     getRooms(db, function(rooms) {
-      res.status(200).json(rooms);
+      if (!rooms) {
+        res.status(404).json({"message" : "Couldn't find any rooms"});
+      }
+      else {
+        res.status(200).json(rooms);
+      }
+      
       client.close();
     });
   });
 }
 
+// Get single room
+app.get("/api/room/:id", function(req, res, next){
+  var client = new MongoClient(uri);
+  client.connect(function(err) {
+    if (err) {
+      console.log("Error connecting to MongoDB: " + err);
+      return;
+    }
+    console.log("Connected successfully to MongoDB");
+    var db = client.db(dbName);
+
+    getSingleRoom(db, req.params.id, function(room) {
+      if (!room) {
+        res.status(404).json({"message" : "Couldn't find that room"});
+      }
+      else {
+        res.status(200).json(room);
+      }
+      
+      client.close();
+    });
+  });
+});
+
 // Get usage
-app.get("/api/room/usage/", getUsageRoute);
+app.get("/api/room/usage", getUsageRoute);
 function getUsageRoute(req, res, next) {
   // Check user permissions
   if (req.auth.user !== "admin") {
@@ -121,10 +107,77 @@ function getUsageRoute(req, res, next) {
     console.log("Connected successfully to MongoDB");
     var db = client.db(dbName);
 
-    getUsage(db, function(usage) {
-      res.status(200).json(usage);
+    // Request usage from MongoDB
+    getUsage(db, req.query.startDate, req.query.endDate, function(usage) {
+      if (!usage) {
+        res.status(404).json({"message" : "Couldn't find any usage"});
+      }
+      else {
+        res.status(200).json(usage);
+      }
+
       client.close();
     });
+  });
+}
+
+// Database functions
+function getRooms(db, callback) {
+  var collection = db.collection("rooms");
+  collection.find({}).toArray(function(err, rooms) {
+    if (err) {
+      console.log("Error finding rooms: " + err);
+      return;
+    }
+
+    console.log("Found the following rooms");
+    console.log(rooms);
+    callback(rooms);
+  });
+}
+
+function getSingleRoom(db, roomId, callback) {
+  var collection = db.collection("rooms");
+  collection.findOne({id: roomId}, function(err, room) {
+    if (err) {
+      console.log("Error finding room: " + err);
+      return;
+    }
+    console.log("Found the following room");
+    console.log(room);
+    callback(room);
+  });
+}
+
+function insertRoom(db, callback) {
+  var collection = db.collection("rooms");
+  collection.insertOne(room, function(err, room) {
+    if (err) {
+      console.log("Error inserting rooms: " + err);
+      return;
+    }
+    console.log("Inserted the following room into the collection");
+    console.log(room);
+    callback(room);
+  });
+}
+
+function getUsage(db, start, end, id, callback) {
+  // Convert dates
+  var startDate = new Date(start);
+  var endDate = new Date(end);
+
+  var collection = db.collection("usage");
+  console.log(collection);
+  collection.find({}).toArray(function(err, usage) {
+    if (err) {
+      console.log("Error finding usage: " + err);
+      return;
+    }
+
+    console.log("Found the following usage");
+    console.log(usage);
+    callback(usage);
   });
 }
 

@@ -6,7 +6,8 @@
   "scripts": {
     "test": "testing",
     "start": "node app.js",
-    "reinstall": "rm -r node_modules && npm install && npm start"
+    "reinstall": "rm -r node_modules && npm install && npm start",
+    "dev": "node --inspect app.js"
   },
   "repository": {
     "type": "git",
