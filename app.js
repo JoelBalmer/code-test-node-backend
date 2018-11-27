@@ -44,7 +44,7 @@ function getRoomsRoute(req, res, next) {
   var client = new MongoClient(uri);
   client.connect(function(err) {
     if (err) {
-      console.log("Error connecting to MongoDB: " + err);
+      console.log("Error connecting to MongoDB:\n" + err);
       return;
     }
     console.log("Connected successfully to MongoDB");
@@ -69,7 +69,7 @@ function getRoomRoute(req, res, next) {
   var client = new MongoClient(uri);
   client.connect(function(err) {
     if (err) {
-      console.log("Error connecting to MongoDB: " + err);
+      console.log("Error connecting to MongoDB:\n" + err);
       return;
     }
     console.log("Connected successfully to MongoDB");
@@ -81,6 +81,40 @@ function getRoomRoute(req, res, next) {
       }
       else {
         res.status(200).json(room);
+      }
+      
+      client.close();
+    });
+  });
+}
+
+// Set a room's availability
+app.put("/api/room/:id", setAvailabilityRoute);
+function setAvailabilityRoute(req, res, next) {
+  // Check body key has a value
+  if (typeof(req.body.available) !== "boolean") {
+    var err = new Error("No availability was supplied");
+    err.status = 404;
+    next(err);  
+    return;
+  }
+
+  // Connect to MongoDB
+  var client = new MongoClient(uri);
+  client.connect(function(err) {
+    if (err) {
+      console.log("Error connecting to MongoDB:\n" + err);
+      return;
+    }
+    console.log("Connected successfully to MongoDB");
+    var db = client.db(dbName);
+
+    setAvailability(db, req.params.id, req.body.available, function(room) {
+      if (!room) {
+        res.status(404).json({"message" : "Couldn't update availability"});
+      }
+      else {
+        res.status(204).json();
       }
       
       client.close();
@@ -103,7 +137,7 @@ function addRoomRoute(req, res, next) {
   var client = new MongoClient(uri);
   client.connect(function(err) {
     if (err) {
-      console.log("Error connecting to MongoDB: " + err);
+      console.log("Error connecting to MongoDB:\n" + err);
       return;
     }
     console.log("Connected successfully to MongoDB");
@@ -129,7 +163,7 @@ function getUsageRoute(req, res, next) {
   var client = new MongoClient(uri);
   client.connect(function(err) {
     if (err) {
-      console.log("Error connecting to MongoDB: " + err);
+      console.log("Error connecting to MongoDB:\n" + err);
       next(err);
     }
     console.log("Connected successfully to MongoDB");
@@ -149,17 +183,16 @@ function getUsageRoute(req, res, next) {
   });
 }
 
-// Database functions
+// Database query functions
 function getRooms(db, callback) {
   var collection = db.collection("rooms");
   collection.find({}).toArray(function(err, rooms) {
     if (err) {
-      console.log("Error finding rooms: " + err);
+      console.log("Error finding rooms:\n" + err);
       return;
     }
 
-    console.log("Found the following rooms");
-    console.log(rooms);
+    console.log("Found the following rooms:\n" + rooms);
     callback(rooms);
   });
 }
@@ -168,13 +201,30 @@ function getRoom(db, roomId, callback) {
   var collection = db.collection("rooms");
   collection.findOne({id: roomId}, function(err, room) {
     if (err) {
-      console.log("Error finding room: " + err);
+      console.log("Error finding room:\n" + err);
       return;
     }
-    console.log("Found the following room");
-    console.log(room);
+    console.log("Found the following room:\n" + room);
     callback(room);
   });
+}
+
+function setAvailability(db, id, availability, callback) {
+  // Create room object
+  var collection = db.collection("rooms");
+  var booleanValue = Boolean(availability);
+  collection.updateOne(
+    {"id" : id},
+    {$set : {"available" : booleanValue}},
+    function (err, room) {
+      if (err) {
+        console.log("Error updating room:\n" + err);
+        return;
+      }
+      console.log("Inserted the following room into the collection:\n" + result);
+      callback(room);
+    }
+  );
 }
 
 function addRoom(db, name, callback) {
@@ -186,7 +236,7 @@ function addRoom(db, name, callback) {
   };
   collection.insertOne(roomToAdd, function(err, room) {
     if (err) {
-      console.log("Error inserting rooms: " + err);
+      console.log("Error inserting rooms:\n" + err);
       return;
     }
 
@@ -196,7 +246,7 @@ function addRoom(db, name, callback) {
       {"_id" : ObjectId(objectIdString)},
       {$set : {"id" : objectIdString}}
     );
-    console.log("Inserted the following room '" + name + "' into the collection");
+    console.log("Inserted the following room into the collection:\n" + name);
     callback(name);
   });
 }
@@ -217,12 +267,11 @@ function getUsage(db, start, end, callback) {
     })
     .toArray(function(err, usage) {
       if (err) {
-        console.log("Error finding usage: " + err);
+        console.log("Error finding usage:\n" + err);
         return;
       }
 
-      console.log("Found the following usage");
-      console.log(usage);
+      console.log("Found the following usage:\n" + usage);
       callback(usage);
   });
 }
