@@ -89,7 +89,7 @@ function getRoomRoute(req, res, next) {
 }
 
 // Add a room
-app.post('/api/room/', addRoomRoute);
+app.post("/api/room/", addRoomRoute);
 function addRoomRoute(req, res, next) {
   // Check user permissions
   if (req.auth.user !== "admin") {
@@ -109,12 +109,12 @@ function addRoomRoute(req, res, next) {
     console.log("Connected successfully to MongoDB");
     var db = client.db(dbName);
 
-    addRoom(db, req.body.name, function(room) {
-      if (!room) {
+    addRoom(db, req.body.name, function(name) {
+      if (!name) {
         res.status(404).json({"message" : "Couldn't create a room"});
       }
       else {
-        res.status(200).json(room);
+        res.status(204).json();
       }
       
       client.close();
