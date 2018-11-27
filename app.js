@@ -1,4 +1,5 @@
 var MongoClient = require("mongodb").MongoClient;
+var ObjectId = require('mongodb').ObjectID;
 var express = require("express");
 var helmet = require("helmet");
 var bodyParser = require("body-parser");
@@ -34,7 +35,7 @@ app.use(
 app.use(helmet());
 
 // Body parser middleware
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // Get all rooms
@@ -63,7 +64,8 @@ function getRoomsRoute(req, res, next) {
 }
 
 // Get single room
-app.get("/api/room:id", function(req, res, next){
+app.get("/api/room/:id", getRoomRoute);
+function getRoomRoute(req, res, next) {
   var client = new MongoClient(uri);
   client.connect(function(err) {
     if (err) {
@@ -73,7 +75,7 @@ app.get("/api/room:id", function(req, res, next){
     console.log("Connected successfully to MongoDB");
     var db = client.db(dbName);
 
-    getSingleRoom(db, req.params.id, function(room) {
+    getRoom(db, req.params.id, function(room) {
       if (!room) {
         res.status(404).json({"message" : "Couldn't find that room"});
       }
@@ -84,11 +86,11 @@ app.get("/api/room:id", function(req, res, next){
       client.close();
     });
   });
-});
+}
 
-// Get usage
-app.get("/api/room/usage", getUsageRoute);
-function getUsageRoute(req, res, next) {
+// Add a room
+app.post('/api/room/', addRoomRoute);
+function addRoomRoute(req, res, next) {
   // Check user permissions
   if (req.auth.user !== "admin") {
     var err = new Error("Not an admin");
@@ -97,6 +99,32 @@ function getUsageRoute(req, res, next) {
     return;
   }
 
+  // Connect to MongoDB
+  var client = new MongoClient(uri);
+  client.connect(function(err) {
+    if (err) {
+      console.log("Error connecting to MongoDB: " + err);
+      return;
+    }
+    console.log("Connected successfully to MongoDB");
+    var db = client.db(dbName);
+
+    addRoom(db, req.body.name, function(room) {
+      if (!room) {
+        res.status(404).json({"message" : "Couldn't create a room"});
+      }
+      else {
+        res.status(200).json(room);
+      }
+      
+      client.close();
+    });
+  });
+}
+
+// Get usage
+app.get("/api/room/usage", getUsageRoute);
+function getUsageRoute(req, res, next) {
   // Connect to MongoDB
   var client = new MongoClient(uri);
   client.connect(function(err) {
@@ -136,7 +164,7 @@ function getRooms(db, callback) {
   });
 }
 
-function getSingleRoom(db, roomId, callback) {
+function getRoom(db, roomId, callback) {
   var collection = db.collection("rooms");
   collection.findOne({id: roomId}, function(err, room) {
     if (err) {
@@ -149,16 +177,27 @@ function getSingleRoom(db, roomId, callback) {
   });
 }
 
-function insertRoom(db, callback) {
+function addRoom(db, name, callback) {
+  // Create room object
   var collection = db.collection("rooms");
-  collection.insertOne(room, function(err, room) {
+  var roomToAdd = {
+    "name": name,
+    "available": true
+  };
+  collection.insertOne(roomToAdd, function(err, room) {
     if (err) {
       console.log("Error inserting rooms: " + err);
       return;
     }
-    console.log("Inserted the following room into the collection");
-    console.log(room);
-    callback(room);
+
+    // Swap ._id for .id
+    var objectIdString = room.ops[0]._id.toString();
+    collection.updateOne(
+      {"_id" : ObjectId(objectIdString)},
+      {$set : {"id" : objectIdString}}
+    );
+    console.log("Inserted the following room '" + name + "' into the collection");
+    callback(name);
   });
 }
 
