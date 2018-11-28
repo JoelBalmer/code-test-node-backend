@@ -2,8 +2,7 @@
 Welcome to RoomBooker - A simple API to view room bookings!
 
 # Instructions
-Head to the following URL where andyou can make your requests (remember Basic Auth headers)!
-https://ocasta-room-booker.herokuapp.com/
+Head to [ocasta-room-booker.herokuapp.com](https://ocasta-room-booker.herokuapp.com/) the following URL where and you can make your requests (remember Basic Auth headers)!
 
 # Other projects
 
