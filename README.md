@@ -6,3 +6,10 @@
 3. Be consistent with erroring (passing up the chainn, res.send, etc.)
 4. Be consistent with spacing
 5. Be consistent with commenting
+6. Add entry to the usage collection each time a room is a) created b) availabilty updated c) name updated
+7. Security points by obscuring mongodb admin info
+8. Add optional room id to usage
+
+# Improvements
+1. Move users to a database instead of a JSON list
+2. Use JSON web tokens to use production grade authentication security

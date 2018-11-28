@@ -9,6 +9,7 @@ var basicAuth = require("express-basic-auth");
 var uri =
   "mongodb://admin:jeeves-567-HELLO!@ds115854.mlab.com:15854/roombooker";
 var dbName = "roombooker";
+var error;
 
 // Express server setup
 var app = express();
@@ -19,6 +20,13 @@ app.listen(port, function() {
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Use Helmet to protect against well known vulnerabilities
+app.use(helmet());
+
+// Body parser middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 // Handle Express Basic xxx authentication
 app.use(
@@ -31,12 +39,9 @@ app.use(
   })
 );
 
-// Use Helmet to protect against well known vulnerabilities
-app.use(helmet());
-
-// Body parser middleware
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+/* 
+HTTP requests
+*/
 
 // Get all rooms
 app.get("/api/room/", getRoomsRoute);
@@ -88,14 +93,67 @@ function getRoomRoute(req, res, next) {
   });
 }
 
-// Set a room's availability
-app.put("/api/room/:id", setAvailabilityRoute);
-function setAvailabilityRoute(req, res, next) {
-  // Check body key has a value
-  if (typeof(req.body.available) !== "boolean") {
-    var err = new Error("No availability was supplied");
-    err.status = 404;
+// Set room availability and name
+app.put("/api/room/:id", setRoomRoute);
+function setRoomRoute(req, res, next) {
+  // Check values are supplied
+  var availabilityExists = typeof req.body.available === "boolean";
+  var nameExists = req.body.name;
+
+  // Check which route is required
+  if (availabilityExists) {
+    console.log("1 Req param id is:\n" + req.params.id);
+    setAvailabilityRoute(req, res, next);
+  }
+  if (nameExists && req.body.name.length > 0) {
+    setNameRoute(req, res, next);
+  }
+  if (!nameExists && !availabilityExists) {
+    var err = new Error("No values supplied");
+    err.status = 400;
     next(err);  
+    return;
+  }
+  
+  // Only send response here, due to 'Can't remove headers after they are sent' error
+  if (error) {
+    next(error);
+    error = null;
+  }
+  else {
+    res.status(204).json();
+  }
+}
+function setAvailabilityRoute(req, res, next) {
+  // Set id with correct type to pass in
+  var id = String(req.params.id);
+
+  // Connect to MongoDB
+  var client = new MongoClient(uri);
+  client.connect(function(err) {
+    if (err) {
+      console.log("Error connecting to MongoDB:\n" + err);
+      return;
+    }
+    console.log("Connected successfully to MongoDB");
+    var db = client.db(dbName);
+
+    setAvailability(db, id, req.body.available, function(room) {
+      if (!room) {
+        res.status(404).json({"message" : "Couldn't update availability"});
+        client.close();
+        return;
+      }
+      
+      client.close();
+    });
+  });
+}
+function setNameRoute(req, res, next) {
+  // Check user permissions
+  if (req.auth.user !== "admin") {
+    error = new Error("Not an admin: Can't update a room name");
+    error.status = 401;
     return;
   }
 
@@ -109,12 +167,11 @@ function setAvailabilityRoute(req, res, next) {
     console.log("Connected successfully to MongoDB");
     var db = client.db(dbName);
 
-    setAvailability(db, req.params.id, req.body.available, function(room) {
+    setName(db, req.params.id, req.body.name, function(room) {
       if (!room) {
-        res.status(404).json({"message" : "Couldn't update availability"});
-      }
-      else {
-        res.status(204).json();
+        res.status(404).json({"message" : "Couldn't set room name"});
+        client.close();
+        return;
       }
       
       client.close();
@@ -127,7 +184,7 @@ app.post("/api/room/", addRoomRoute);
 function addRoomRoute(req, res, next) {
   // Check user permissions
   if (req.auth.user !== "admin") {
-    var err = new Error("Not an admin");
+    var err = new Error("Not an admin: Can't create a room");
     err.status = 401;
     next(err);
     return;
@@ -183,7 +240,11 @@ function getUsageRoute(req, res, next) {
   });
 }
 
-// Database query functions
+/* 
+Database query functions 
+*/
+
+// Find all rooms
 function getRooms(db, callback) {
   var collection = db.collection("rooms");
   collection.find({}).toArray(function(err, rooms) {
@@ -197,6 +258,7 @@ function getRooms(db, callback) {
   });
 }
 
+// Find single room
 function getRoom(db, roomId, callback) {
   var collection = db.collection("rooms");
   collection.findOne({id: roomId}, function(err, room) {
@@ -209,8 +271,8 @@ function getRoom(db, roomId, callback) {
   });
 }
 
+// Find and update room availability
 function setAvailability(db, id, availability, callback) {
-  // Create room object
   var collection = db.collection("rooms");
   var booleanValue = Boolean(availability);
   collection.updateOne(
@@ -218,22 +280,44 @@ function setAvailability(db, id, availability, callback) {
     {$set : {"available" : booleanValue}},
     function (err, room) {
       if (err) {
-        console.log("Error updating room:\n" + err);
+        console.log("Error updating room availability:\n" + err);
         return;
       }
-      console.log("Inserted the following room into the collection:\n" + result);
+      console.log("Updated the following room's availability:\n" + room);
+      
+      // Add to usage collection
       callback(room);
     }
   );
 }
 
-function addRoom(db, name, callback) {
-  // Create room object
+// Find and update room name
+function setName(db, id, name, callback) {
   var collection = db.collection("rooms");
+  collection.updateOne(
+    {"id" : id},
+    {$set : {"name" : name}},
+    function (err, room) {
+      if (err) {
+        console.log("Error updating room name:\n" + err);
+        return;
+      }
+      console.log("Update the following room's name:\n" + room);
+      
+      // Add to usage collection
+      callback(room);
+    }
+  );
+}
+
+// Insert room
+function addRoom(db, name, callback) {
   var roomToAdd = {
     "name": name,
     "available": true
   };
+
+  var collection = db.collection("rooms");
   collection.insertOne(roomToAdd, function(err, room) {
     if (err) {
       console.log("Error inserting rooms:\n" + err);
@@ -247,10 +331,13 @@ function addRoom(db, name, callback) {
       {$set : {"id" : objectIdString}}
     );
     console.log("Inserted the following room into the collection:\n" + name);
+    
+    // Add to usage collection
     callback(name);
   });
 }
 
+// Find usage
 function getUsage(db, start, end, callback) {
   // Convert dates
   var startDate = new Date(start).toISOString();
