@@ -436,7 +436,7 @@ function getUsage(db, start, end, roomId, callback) {
     $lte: endDate
   };
   if (roomId) {
-    queryObject.id = roomId;
+    queryObject['room.id'] = roomId;
   }
 
   // Connet to MongoDB
