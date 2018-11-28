@@ -11,7 +11,7 @@ var error;
 
 // Mongo setup
 var uri =
-  "mongodb://admin:jeeves-567-HELLO!@ds115854.mlab.com:15854/roombooker";
+  "mongodb://admin:" + process.env.MONGO_PASS + "@ds115854.mlab.com:15854/roombooker";
 var dbName = "roombooker";
 
 // Express server setup
