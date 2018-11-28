@@ -1,3 +1,4 @@
+// Imported packages
 var MongoClient = require("mongodb").MongoClient;
 var ObjectId = require('mongodb').ObjectID;
 var express = require("express");
@@ -5,11 +6,13 @@ var helmet = require("helmet");
 var bodyParser = require("body-parser");
 var basicAuth = require("express-basic-auth");
 
+// Global variables
+var error;
+
 // Mongo setup
 var uri =
   "mongodb://admin:jeeves-567-HELLO!@ds115854.mlab.com:15854/roombooker";
 var dbName = "roombooker";
-var error;
 
 // Express server setup
 var app = express();
@@ -35,13 +38,50 @@ app.use(
       user: "secret",
       admin: "supersecret"
     },
-    unauthorizedResponse: {"message" : "Not a user"}
+    unauthorizedResponse: {"message" : "User details incorrect"}
   })
 );
 
 /* 
-HTTP requests
+HTTP request routes 
 */
+
+// Get usage
+app.get("/api/room/usage", getUsageRoute);
+function getUsageRoute(req, res, next) {
+  var roomId = req.query.roomId || "";
+
+  // Reject if no dates supplied
+  if (!req.query.startDate || !req.query.endDate) {
+    var err = new Error("Date values not supplied");
+    err.status = 400;
+    next(err);  
+    return;
+  }
+
+  // Connect to MongoDB
+  var client = new MongoClient(uri);
+  client.connect(function(err) {
+    if (err) {
+      console.log("Error connecting to MongoDB:\n" + err);
+      next(err);
+    }
+    console.log("Connected successfully to MongoDB");
+    var db = client.db(dbName);
+
+    // Request usage from MongoDB
+    getUsage(db, req.query.startDate, req.query.endDate, roomId, function(usage) {
+      if (!usage) {
+        res.status(404).json({"message" : "Couldn't find any usage"});
+      }
+      else {
+        res.status(200).json(usage);
+      }
+
+      client.close();
+    });
+  });
+}
 
 // Get all rooms
 app.get("/api/room/", getRoomsRoute);
@@ -138,7 +178,7 @@ function setAvailabilityRoute(req, res, next) {
     console.log("Connected successfully to MongoDB");
     var db = client.db(dbName);
 
-    setAvailability(db, id, req.body.available, function(room) {
+    setAvailability(db, id, req.body.available, req.auth.user, function(room) {
       if (!room) {
         res.status(404).json({"message" : "Couldn't update availability"});
         client.close();
@@ -167,7 +207,7 @@ function setNameRoute(req, res, next) {
     console.log("Connected successfully to MongoDB");
     var db = client.db(dbName);
 
-    setName(db, req.params.id, req.body.name, function(room) {
+    setName(db, req.params.id, req.body.name, req.auth.user, function(room) {
       if (!room) {
         res.status(404).json({"message" : "Couldn't set room name"});
         client.close();
@@ -200,7 +240,7 @@ function addRoomRoute(req, res, next) {
     console.log("Connected successfully to MongoDB");
     var db = client.db(dbName);
 
-    addRoom(db, req.body.name, function(name) {
+    addRoom(db, req.body.name, req.auth.user, function(name) {
       if (!name) {
         res.status(404).json({"message" : "Couldn't create a room"});
       }
@@ -213,35 +253,8 @@ function addRoomRoute(req, res, next) {
   });
 }
 
-// Get usage
-app.get("/api/room/usage", getUsageRoute);
-function getUsageRoute(req, res, next) {
-  // Connect to MongoDB
-  var client = new MongoClient(uri);
-  client.connect(function(err) {
-    if (err) {
-      console.log("Error connecting to MongoDB:\n" + err);
-      next(err);
-    }
-    console.log("Connected successfully to MongoDB");
-    var db = client.db(dbName);
-
-    // Request usage from MongoDB
-    getUsage(db, req.query.startDate, req.query.endDate, function(usage) {
-      if (!usage) {
-        res.status(404).json({"message" : "Couldn't find any usage"});
-      }
-      else {
-        res.status(200).json(usage);
-      }
-
-      client.close();
-    });
-  });
-}
-
-/* 
-Database query functions 
+/*
+Database query functions
 */
 
 // Find all rooms
@@ -272,7 +285,7 @@ function getRoom(db, roomId, callback) {
 }
 
 // Find and update room availability
-function setAvailability(db, id, availability, callback) {
+function setAvailability(db, id, availability, user, callback) {
   var collection = db.collection("rooms");
   var booleanValue = Boolean(availability);
   collection.updateOne(
@@ -283,16 +296,43 @@ function setAvailability(db, id, availability, callback) {
         console.log("Error updating room availability:\n" + err);
         return;
       }
-      console.log("Updated the following room's availability:\n" + room);
       
-      // Add to usage collection
-      callback(room);
+      // Get newly added room
+      collection.findOne({id: id}, function(err, addedRoom) {
+        if (err) {
+          console.log("Error finding room:\n" + err);
+          return;
+        }
+        console.log("Updated the following room's availability:\n" + addedRoom.id);
+        
+        // Add to usage collection
+        var usage = {
+          "time": new Date().toISOString(),
+          "user": user,
+          "room": {
+            "id": addedRoom.id,
+            "name": addedRoom.name
+          },
+          "available": addedRoom.available
+        };
+        var collection2 = db.collection("usage");
+        collection2.insertOne(usage, function(err, usage) {
+          if (err) {
+            console.log("Error inserting usage:\n" + err);
+            return;
+          }
+          console.log("Inserted usage into the collection:\n" + usage);
+
+          // Finish with callback
+          callback(addedRoom);
+        });
+      });
     }
   );
 }
 
 // Find and update room name
-function setName(db, id, name, callback) {
+function setName(db, id, name, user, callback) {
   var collection = db.collection("rooms");
   collection.updateOne(
     {"id" : id},
@@ -302,16 +342,43 @@ function setName(db, id, name, callback) {
         console.log("Error updating room name:\n" + err);
         return;
       }
-      console.log("Update the following room's name:\n" + room);
-      
-      // Add to usage collection
-      callback(room);
+
+      // Get newly updated room
+      collection.findOne({id: id}, function(err, addedRoom) {
+        if (err) {
+          console.log("Error finding room:\n" + err);
+          return;
+        }
+        console.log("Updated the following room's name:\n" + addedRoom.id);
+        
+        // Add to usage collection
+        var usage = {
+          "time": new Date().toISOString(),
+          "user": user,
+          "room": {
+            "id": addedRoom.id,
+            "name": addedRoom.name
+          },
+          "available": addedRoom.available
+        };
+        var collection2 = db.collection("usage");
+        collection2.insertOne(usage, function(err, usage) {
+          if (err) {
+            console.log("Error inserting usage:\n" + err);
+            return;
+          }
+          console.log("Inserted usage into the collection:\n" + usage);
+
+          // Finish with callback
+          callback(addedRoom);
+        });
+      });
     }
   );
 }
 
 // Insert room
-function addRoom(db, name, callback) {
+function addRoom(db, name, user, callback) {
   var roomToAdd = {
     "name": name,
     "available": true
@@ -328,30 +395,55 @@ function addRoom(db, name, callback) {
     var objectIdString = room.ops[0]._id.toString();
     collection.updateOne(
       {"_id" : ObjectId(objectIdString)},
-      {$set : {"id" : objectIdString}}
-    );
-    console.log("Inserted the following room into the collection:\n" + name);
+      {$set : {"id" : objectIdString}},
+      function(err, addedRoom) {
+        console.log("Inserted the following room into the collection:\n" + addedRoom);
     
-    // Add to usage collection
-    callback(name);
+        // Add to usage collection
+        var usage = {
+          "time": new Date().toISOString(),
+          "user": user,
+          "room": {
+            "id": objectIdString,
+            "name": roomToAdd.name
+          },
+          "available": roomToAdd.available
+        };
+        var collection2 = db.collection("usage");
+        collection2.insertOne(usage, function(err, usage) {
+          if (err) {
+            console.log("Error inserting usage:\n" + err);
+            return;
+          }
+          console.log("Inserted usage into the collection:\n" + usage);
+
+          // Finish with callback
+          callback(addedRoom);
+        });
+      }
+    );
   });
 }
 
 // Find usage
-function getUsage(db, start, end, callback) {
-  // Convert dates
+function getUsage(db, start, end, roomId, callback) {
+  // Prepare the query object
+  var queryObject = {};
   var startDate = new Date(start).toISOString();
   var endDate = new Date(end).toISOString();
+  queryObject.time = { 
+    $gte: startDate,
+    $lte: endDate
+  };
+  if (roomId) {
+    queryObject.id = roomId;
+  }
 
+  // Connet to MongoDB
   var collection = db.collection("usage");
   console.log(collection);
   collection
-    .find({
-      "time" : { 
-        $gte: startDate,
-        $lte: endDate
-      },
-    })
+    .find(queryObject)
     .toArray(function(err, usage) {
       if (err) {
         console.log("Error finding usage:\n" + err);
@@ -363,7 +455,12 @@ function getUsage(db, start, end, callback) {
   });
 }
 
-// Error handling
+/*
+Error handling
+*/
+
+// Send a caught error, otherwise send 500 error
+app.use(errorHandler);
 function errorHandler(err, req, res, next) {
   if (!err.status) {
     err.status = 500;
@@ -372,9 +469,9 @@ function errorHandler(err, req, res, next) {
   res.status(err.status).json({ message: err.message });
   next(err);
 }
-app.use(errorHandler);
 
 // Handle 404 not found
-app.use(function(req, res, next) {
+app.use(notFound404Handler);
+function notFound404Handler(req, res, next) {
   res.status(404).json({ message: "Sorry can't find that!" });
-});
+}
