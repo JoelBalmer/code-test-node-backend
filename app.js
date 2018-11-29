@@ -17,12 +17,12 @@ var dbName = "roombooker";
 // Express server setup
 var app = express();
 var port = process.env.PORT || 3000;
-app.listen(port, function() {
-  console.log("Server running on port: " + port);
-});
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.listen(port, function() {
+  console.log("Server running on port: " + port);
+});
 
 // Use Helmet to protect against well known vulnerabilities
 app.use(helmet());

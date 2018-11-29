@@ -4,10 +4,10 @@
   "description": "A simple API to view room bookings",
   "main": "app.js",
   "scripts": {
-    "test": "testing",
+    "test": "jest",
     "start": "node app.js",
     "reinstall": "rm -r node_modules && npm install && npm start",
-    "dev": " nodemon --inspect app.js"
+    "dev": "nodemon --inspect app.js"
   },
   "repository": {
     "type": "git",
