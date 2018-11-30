@@ -51,13 +51,8 @@ app.use(
 HTTP request routes 
 */
 
-// Get usage
 app.get("/api/room/usage", getUsageRoute);
-
-// Get all rooms
 app.get("/api/room/", getRoomsRoute);
-
-// Get single room
 app.get("/api/room/:id", getRoomRoute);
 
 
