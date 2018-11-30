@@ -6,6 +6,11 @@ var helmet = require("helmet");
 var bodyParser = require("body-parser");
 var basicAuth = require("express-basic-auth");
 
+// Imported js files
+var getRoomsRoute = require("./routes/getAllRooms");
+var getRoomRoute = require("./routes/getSingleRoom");
+var getUsageRoute = require("./routes/getUsage");
+
 // Global variables
 var error;
 
@@ -48,90 +53,13 @@ HTTP request routes
 
 // Get usage
 app.get("/api/room/usage", getUsageRoute);
-function getUsageRoute(req, res, next) {
-  var roomId = req.query.roomId || "";
-
-  // Reject if no dates supplied
-  if (!req.query.startDate || !req.query.endDate) {
-    var err = new Error("Date values not supplied");
-    err.status = 400;
-    next(err);  
-    return;
-  }
-
-  // Connect to MongoDB
-  var client = new MongoClient(uri);
-  client.connect(function(err) {
-    if (err) {
-      console.log("Error connecting to MongoDB:\n" + err);
-      next(err);
-    }
-    console.log("Connected successfully to MongoDB");
-    var db = client.db(dbName);
-
-    // Request usage from MongoDB
-    getUsage(db, req.query.startDate, req.query.endDate, roomId, function(usage) {
-      if (!usage) {
-        res.status(404).json({"message" : "Couldn't find any usage"});
-      }
-      else {
-        res.status(200).json(usage);
-      }
-
-      client.close();
-    });
-  });
-}
 
 // Get all rooms
 app.get("/api/room/", getRoomsRoute);
-function getRoomsRoute(req, res, next) {
-  var client = new MongoClient(uri);
-  client.connect(function(err) {
-    if (err) {
-      console.log("Error connecting to MongoDB:\n" + err);
-      return;
-    }
-    console.log("Connected successfully to MongoDB");
-    var db = client.db(dbName);
-
-    getRooms(db, function(rooms) {
-      if (!rooms) {
-        res.status(404).json({"message" : "Couldn't find any rooms"});
-      }
-      else {
-        res.status(200).json(rooms);
-      }
-      
-      client.close();
-    });
-  });
-}
 
 // Get single room
 app.get("/api/room/:id", getRoomRoute);
-function getRoomRoute(req, res, next) {
-  var client = new MongoClient(uri);
-  client.connect(function(err) {
-    if (err) {
-      console.log("Error connecting to MongoDB:\n" + err);
-      return;
-    }
-    console.log("Connected successfully to MongoDB");
-    var db = client.db(dbName);
 
-    getRoom(db, req.params.id, function(room) {
-      if (!room) {
-        res.status(404).json({"message" : "Couldn't find that room"});
-      }
-      else {
-        res.status(200).json(room);
-      }
-      
-      client.close();
-    });
-  });
-}
 
 // Set room availability and name
 app.put("/api/room/:id", setRoomRoute);
@@ -256,33 +184,6 @@ function addRoomRoute(req, res, next) {
 /*
 Database query functions
 */
-
-// Find all rooms
-function getRooms(db, callback) {
-  var collection = db.collection("rooms");
-  collection.find({}).toArray(function(err, rooms) {
-    if (err) {
-      console.log("Error finding rooms:\n" + err);
-      return;
-    }
-
-    console.log("Found the following rooms:\n" + rooms);
-    callback(rooms);
-  });
-}
-
-// Find single room
-function getRoom(db, roomId, callback) {
-  var collection = db.collection("rooms");
-  collection.findOne({id: roomId}, function(err, room) {
-    if (err) {
-      console.log("Error finding room:\n" + err);
-      return;
-    }
-    console.log("Found the following room:\n" + room);
-    callback(room);
-  });
-}
 
 // Find and update room availability
 function setAvailability(db, id, availability, user, callback) {
@@ -425,35 +326,7 @@ function addRoom(db, name, user, callback) {
   });
 }
 
-// Find usage
-function getUsage(db, start, end, roomId, callback) {
-  // Prepare the query object
-  var queryObject = {};
-  var startDate = new Date(start).toISOString();
-  var endDate = new Date(end).toISOString();
-  queryObject.time = { 
-    $gte: startDate,
-    $lte: endDate
-  };
-  if (roomId) {
-    queryObject['room.id'] = roomId;
-  }
 
-  // Connet to MongoDB
-  var collection = db.collection("usage");
-  console.log(collection);
-  collection
-    .find(queryObject)
-    .toArray(function(err, usage) {
-      if (err) {
-        console.log("Error finding usage:\n" + err);
-        return;
-      }
-
-      console.log("Found the following usage:\n" + usage);
-      callback(usage);
-  });
-}
 
 /*
 Error handling
