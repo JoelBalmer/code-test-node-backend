@@ -1,16 +1,20 @@
 var connectMongo = require('./../utils/mongodb');
 var getRoom = require('./../queries/getSingleRoom');
+var createError = require("./../utils/createError");
 
 module.exports = function getRoomRoute(req, res, next) {
-  function onMongoConnected(db) {
+  function onMongoConnected(database) {
     // Mongo query
-    getRoom(db, req.params.id, function(room) {
+    getRoom(database.db(), req.params.id, function(room) {
       if (!room) {
-        res.status(404).json({message: "Couldn't find that room"});
+        next(createError("Couldn't find that room", 401));  
+        return;
       } 
       else {
         res.status(200).json(room);
       }
+
+      database.close();
     });
   }
 

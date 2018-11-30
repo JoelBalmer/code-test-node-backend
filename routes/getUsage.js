@@ -1,25 +1,27 @@
+var createError = require("./../utils/createError");
 var connectMongo = require('./../utils/mongodb');
 var getUsage = require('./../queries/getUsage');
 
 module.exports = function getUsageRoute(req, res, next) {
   // Reject if no dates supplied
   if (!req.query.startDate || !req.query.endDate) {
-    var err = new Error("Date values not supplied");
-    err.status = 400;
-    next(err);  
+    next(createError("Date values not supplied", 400));    
     return;
   }
   
   var roomId = req.query.roomId || "";
-  function onMongoConnected(db) {
+  function onMongoConnected(database) {
     // Mongo query
-    getUsage(db, req.query.startDate, req.query.endDate, roomId, function(usage) {
+    getUsage(database.db(), req.query.startDate, req.query.endDate, roomId, function(usage) {
       if (!usage) {
-        res.status(404).json({"message" : "Couldn't find any usage"});
+        next(createError("Couldn't find any usage", 404));    
+        return;
       }
       else {
         res.status(200).json(usage);
       }
+
+      database.close();
     });
   }
 

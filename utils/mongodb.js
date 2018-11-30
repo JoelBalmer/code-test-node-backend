@@ -1,18 +1,22 @@
 var MongoClient = require("mongodb").MongoClient;
 var MongoConfig = require("./../config").mongodb;
 
-module.exports = function mongoConnect(callback) {
-  var client = new MongoClient(MongoConfig.uri);
-  client.connect(function(err) {
+module.exports = function connectMongo(callback) {
+  //var client = new MongoClient(MongoConfig.uri);
+  //client.connect(function(err) {
+  MongoClient.connect(MongoConfig.uri, function(err, database) {
     if (err) {
-      console.log("Error connecting to MongoDB:\n" + err);
+      console.log(err);
       return;
     }
     
     console.log("Connected successfully to MongoDB");
-    var db = client.db(MongoConfig.dbName);
-    callback(db);
-    
-    client.close();
+
+    //var db = database.db('myDatabaseNameAsAString')
+
+    // var db = database.db();
+
+    //var db = client.db(MongoConfig.dbName);
+    callback(database);
   });
 };

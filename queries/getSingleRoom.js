@@ -1,3 +1,5 @@
+var createError = require("./../utils/createError");
+
 module.exports = function getRoom(db, roomId, callback) {
   var collection = db.collection("rooms");
   collection.findOne({id: roomId}, function(err, room) {

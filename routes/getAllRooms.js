@@ -1,16 +1,20 @@
 var connectMongo = require('./../utils/mongodb');
 var getRooms = require('./../queries/getAllRooms');
+var createError = require("./../utils/createError");
 
 module.exports = function getRoomsRoute(req, res, next) {
-  function onMongoConnected(db) {
+  function onMongoConnected(database) {
     // Mongo query
-    getRooms(db, function(rooms) {
+    getRooms(database.db(), function(rooms) {
       if (!rooms) {
-        res.status(404).json({message: "Couldn't find any rooms"});
+        next(createError("Couldn't find any rooms", 404)); 
+        return;
       } 
       else {
         res.status(200).json(rooms);
       }
+
+      database.close();
     });
   }
 

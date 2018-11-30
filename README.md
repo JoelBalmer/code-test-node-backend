@@ -44,7 +44,8 @@ https://github.com/expressjs/express/blob/master/examples/route-separation/index
 7. ~~Security points by obscuring mongodb admin info~~
 8. ~~Add optional room id to usage~~
 9. ~~Add air bnb style jsvscript guide~~
-10. Move collection into utils mongo file?
+10. Modularise adding usage
+11. Make users JSON list in config
 
 # Improvements
 1. Move users to a database instead of a JSON list

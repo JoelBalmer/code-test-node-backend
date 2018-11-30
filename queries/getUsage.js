@@ -1,3 +1,5 @@
+var createError = require("./../utils/createError");
+
 module.exports = function getUsage(db, start, end, roomId, callback) {
   // Prepare the query object
   var queryObject = {};
