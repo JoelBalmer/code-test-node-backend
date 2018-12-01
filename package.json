@@ -2,12 +2,12 @@
   "name": "roombooker",
   "version": "1.0.0",
   "description": "A simple API to view room bookings",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "test": "jest",
-    "start": "node app.js",
+    "test": "jest --detectOpenHandles",
+    "start": "node server.js",
     "reinstall": "rm -r node_modules && npm install && npm start",
-    "dev": "nodemon --inspect app.js"
+    "dev": "nodemon --inspect server.js"
   },
   "repository": {
     "type": "git",
