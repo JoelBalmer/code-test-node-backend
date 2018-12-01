@@ -18,3 +18,33 @@ describe("Testing /api/room/", function () {
             .expect(200, done());
     });
 });
+
+describe("Testing /api/room/:id", function () {
+    it("Respond with json containing a room matching the :id", function(done) {
+        request(app)
+            .get("/api/room/5c029aae65a76f843fd650dc")
+            .set("Authorization", "Basic cm9vdDpzdXBlcnN1cGVyc2VjcmV0")
+            .expect('Content-Type', /json/)
+            .expect(200, done());
+    });
+});
+
+describe("Testing /api/room/usage?startDate=start&endDate=end", function () {
+    it("Respond with json containing a list of rooms matching the timeframe", function(done) {
+        request(app)
+            .get("/api/room/usage?startDate=2018-11-28T19:40:40.738Z&endDate=2018-12-01T14:35:41.119Z")
+            .set("Authorization", "Basic cm9vdDpzdXBlcnN1cGVyc2VjcmV0")
+            .expect('Content-Type', /json/)
+            .expect(200, done());
+    });
+});
+
+describe("Testing /api/room/usage?startDate=start&endDate=end&roomId=id", function () {
+    it("Respond with json containing a list of rooms matching the timeframe and roomId", function(done) {
+        request(app)
+            .get("/api/room/usage?startDate=2018-11-28T19:40:40.738Z&endDate=2018-12-01T14:35:41.119Z&roomId=5c029b6065a76f843fd650e3")
+            .set("Authorization", "Basic cm9vdDpzdXBlcnN1cGVyc2VjcmV0")
+            .expect('Content-Type', /json/)
+            .expect(200, done());
+    });
+});
