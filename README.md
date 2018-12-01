@@ -4,6 +4,32 @@ Welcome to RoomBooker - A simple API to view room bookings!
 # Instructions
 1. Head to [ocasta-room-booker.herokuapp.com](https://ocasta-room-booker.herokuapp.com/) the following URL where and you can make your requests
 2. For info on how URLs are formatted, what headers are needed, etc., head to [challenge.ocasta.com](http://challenge.ocasta.com/)
+3. List of users were not committed for security, see email for list of users
+
+# Technical choices
+1. Express mLab and Heroku were used because I have worked with them before and they fufill the requirement. I chose to use MongoDB and not mongoose (despite only knowing mongoose) as mongodb was specifically mentioned in the spec, but mongoose wasn't.
+2. Architecturally, I began by building all routes and db calls in the same file. Then once I'd tested it was working, I began modularising, simplifying, building utility modules, etc. This had the added benefit of increasing elegance, helping with DRY issues, testing, security, etc.
+3. A trade off I made was that I wanted to use a new collection in mongo for users. This would have been more 'real world' but it would have been extra work, whereas a pre-canned list of users met the brief. I also have no experience with Dockerfiles (as mentioned before), and even though it was recommended, I interpreted the brief to mean ideally i.e. preferred was having a public location to test against, which I have provided.
+
+##### Suggested improvements
+1. Move users to a database instead of a JSON list
+2. Use JSON web tokens to use production grade authentication security
+3. Use a slightly different method to remove deprecated warning: https://able.bio/ivanberdichevsky/how-to-set-up-a-mongodb-environment-along-with-npm--18gkgzt
+4. ~~Report back to 'user' that they can't update room name AND they have succesfully updated availability~~
+
+##### Checklist
+1. ~~Move error messages from after callbacks to before callbacks, using err in mongodb function callbacks, like the availability one~~
+2. ~~Refactor to separate route files, etc.~~
+3. ~~Be consistent with erroring (passing up the chainn, res.send, etc.)~~
+4. Be consistent with spacing
+5. Be consistent with commenting
+6. ~~Add entry to the usage collection each time a room is a) created b) availabilty updated c) name updated~~
+7. ~~Security points by obscuring mongodb admin info~~
+8. ~~Add optional room id to usage~~
+9. ~~Add air bnb style jsvscript guide~~
+10. ~~Modularise adding usage~~
+11. ~~Make users JSON list in config~~
+12. ~~Truncate name~~
 
 # Recent projects
 For many more projects, head to [github.com/JoelBalmer](https://github.com/JoelBalmer)
@@ -32,23 +58,3 @@ For many more projects, head to [github.com/JoelBalmer](https://github.com/JoelB
 * _Why_ - I like getting more experience and contributing to projects I use and that are open source
 * _Github_ - [gas-github](https://github.com/JoelBalmer/gas-github) and [darkreader](https://github.com/JoelBalmer/darkreader) are ones I've contributed to
 * _Live site_ - Chrome store links for [Google Apps Script GitHub Assistant](https://chrome.google.com/webstore/detail/google-apps-script-github/lfjcgcmkmjjlieihflfhjopckgpelofo) and [Dark Reader](https://chrome.google.com/webstore/detail/dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh)
-
-# Checklist
-1. ~~Move error messages from after callbacks to before callbacks, using err in mongodb function callbacks, like the availability one~~
-2. ~~Refactor to separate route files, etc.~~
-3. ~~Be consistent with erroring (passing up the chainn, res.send, etc.)~~
-4. Be consistent with spacing
-5. Be consistent with commenting
-6. ~~Add entry to the usage collection each time a room is a) created b) availabilty updated c) name updated~~
-7. ~~Security points by obscuring mongodb admin info~~
-8. ~~Add optional room id to usage~~
-9. ~~Add air bnb style jsvscript guide~~
-10. ~~Modularise adding usage~~
-11. ~~Make users JSON list in config~~
-12. ~~Truncate name~~
-
-# Improvements
-1. Move users to a database instead of a JSON list
-2. Use JSON web tokens to use production grade authentication security
-3. Use a slightly different method to remove deprecated warning: https://able.bio/ivanberdichevsky/how-to-set-up-a-mongodb-environment-along-with-npm--18gkgzt
-4. ~~Report back to 'user' that they can't update room name AND they have succesfully updated availability~~
