@@ -7,6 +7,7 @@ Welcome to RoomBooker - A simple API to view room bookings!
 3. List of users were not committed for security, see email for list of users
 
 # Technical choices
+##### Compromises
 1. Express mLab and Heroku were used because I have worked with them before and they fufill the requirement. I chose to use MongoDB and not mongoose (despite only knowing mongoose) as mongodb was specifically mentioned in the spec, but mongoose wasn't.
 2. Architecturally, I began by building all routes and db calls in the same file. Then once I'd tested it was working, I began modularising, simplifying, building utility modules, etc. This had the added benefit of increasing elegance, helping with DRY issues, testing, security, etc.
 3. A trade off I made was that I wanted to use a new collection in mongo for users. This would have been more 'real world' but it would have been extra work, whereas a pre-canned list of users met the brief. I also have no experience with Dockerfiles (as mentioned before), and even though it was recommended, I interpreted the brief to mean ideally i.e. preferred was having a public location to test against, which I have provided.
