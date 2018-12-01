@@ -17,7 +17,8 @@ Welcome to RoomBooker - A simple API to view room bookings!
 1. Move users to a database instead of a JSON list
 2. Use JSON web tokens to use production grade authentication security
 3. Produce a more extensive testing suite (such as spoofing data, testing what shouldn't be returned)
-4. Use a slightly different method to remove mongodb deprecated warning: https://able.bio/ivanberdichevsky/how-to-set-up-a-mongodb-environment-along-with-npm--18gkgzt
+4. Have error callback for database queries (currently it only logs rather than sends error feedback up the chain)
+5. Use a slightly different method to remove mongodb deprecated warning: https://able.bio/ivanberdichevsky/how-to-set-up-a-mongodb-environment-along-with-npm--18gkgzt
 
 ##### Checklist
 1. ~~Move error messages from after callbacks to before callbacks, using err in mongodb function callbacks, like the availability one~~
@@ -33,6 +34,8 @@ Welcome to RoomBooker - A simple API to view room bookings!
 11. ~~Make users JSON list in config~~
 12. ~~Truncate name~~
 13. ~~Report back to 'user' that they can't update room name AND they have succesfully updated availability~~
+14. Remove return line from routes (if error)
+15. Move truncation to db query files
 
 # Recent projects
 For many more projects, head to [github.com/JoelBalmer](https://github.com/JoelBalmer)
