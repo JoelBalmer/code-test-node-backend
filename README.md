@@ -5,6 +5,7 @@ Welcome to RoomBooker - A simple API to view room bookings!
 1. Head to [ocasta-room-booker.herokuapp.com](https://ocasta-room-booker.herokuapp.com/) the following URL where and you can make your requests
 2. For info on how URLs are formatted, what headers are needed, etc., head to [challenge.ocasta.com](http://challenge.ocasta.com/)
 3. List of users were not committed for security, see email for list of users
+4. Hit the appropriate api endpoint with valid request headers (and body data if required) and you should see returned the appropriate data and response codes (or error code and message).
 
 # Technical choices
 ##### Compromises
@@ -15,8 +16,8 @@ Welcome to RoomBooker - A simple API to view room bookings!
 ##### Suggested improvements
 1. Move users to a database instead of a JSON list
 2. Use JSON web tokens to use production grade authentication security
-3. Use a slightly different method to remove deprecated warning: https://able.bio/ivanberdichevsky/how-to-set-up-a-mongodb-environment-along-with-npm--18gkgzt
-4. ~~Report back to 'user' that they can't update room name AND they have succesfully updated availability~~
+3. Produce a more extensive testing suite (such as spoofing data, testing what shouldn't be returned)
+4. Use a slightly different method to remove mongodb deprecated warning: https://able.bio/ivanberdichevsky/how-to-set-up-a-mongodb-environment-along-with-npm--18gkgzt
 
 ##### Checklist
 1. ~~Move error messages from after callbacks to before callbacks, using err in mongodb function callbacks, like the availability one~~
@@ -31,6 +32,7 @@ Welcome to RoomBooker - A simple API to view room bookings!
 10. ~~Modularise adding usage~~
 11. ~~Make users JSON list in config~~
 12. ~~Truncate name~~
+13. ~~Report back to 'user' that they can't update room name AND they have succesfully updated availability~~
 
 # Recent projects
 For many more projects, head to [github.com/JoelBalmer](https://github.com/JoelBalmer)
