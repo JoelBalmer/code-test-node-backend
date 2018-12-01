@@ -2,6 +2,7 @@ var connectMongo = require('./../utils/mongodb');
 var setAvailability = require('./../queries/putRoomAvailability');
 var setName = require('./../queries/putRoomName');
 var createError = require("./../utils/createError");
+var allAdmins = require("./../users").admins;
 
 module.exports = function setRoomRoute(req, res, next) {
   // Check values are supplied
@@ -13,7 +14,7 @@ module.exports = function setRoomRoute(req, res, next) {
   }
   if (nameExists && req.body.name.length > 0) {
     // Check user permissions
-    if (req.auth.user !== "admin") {
+    if (allAdmins.indexOf(req.auth.user) < 0) {
       next(createError("Not an admin: Can't update a room name", 401));  
       return;
     }

@@ -2,7 +2,9 @@ var express = require("express");
 var helmet = require("helmet");
 var bodyParser = require("body-parser");
 var basicAuth = require("express-basic-auth");
+var allUsers = require("./users").allUsers;
 
+// Import routes
 var getRoomsRoute = require("./routes/getAllRooms");
 var getRoomRoute = require("./routes/getSingleRoom");
 var getUsageRoute = require("./routes/getUsage");
@@ -28,10 +30,7 @@ app.use(bodyParser.json());
 
 // Basic authentication handling
 app.use(basicAuth({
-  users: {
-    user: "secret",
-    admin: "supersecret"
-  },
+  users: allUsers,
   unauthorizedResponse: {"message" : "User details incorrect"}
 }));
 

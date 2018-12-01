@@ -1,10 +1,11 @@
 var connectMongo = require("./../utils/mongodb");
 var addRoom = require("./../queries/postNewRoom");
 var createError = require("./../utils/createError");
+var allAdmins = require("./../users").admins;
 
 module.exports = function addRoomRoute(req, res, next) {
   // Check user permissions
-  if (req.auth.user !== "admin") {
+  if (allAdmins.indexOf(req.auth.user) < 0) {
     next(createError("Not an admin: Can't create a room", 401));
     return;
   }

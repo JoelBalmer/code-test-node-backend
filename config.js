@@ -4,6 +4,5 @@ module.exports = {
   "mongodb" : {
     "uri" : uri,
     "dbName" : "roombooker"
-  },
-  "users" : {}
+  }
 };
