@@ -2,6 +2,7 @@ var connectMongo = require("./../utils/mongodb");
 var addRoom = require("./../queries/postNewRoom");
 var createError = require("./../utils/createError");
 var allAdmins = require("./../users").admins;
+var truncateName = require("./../utils/truncateName");
 
 module.exports = function addRoomRoute(req, res, next) {
   // Check user permissions
@@ -11,7 +12,8 @@ module.exports = function addRoomRoute(req, res, next) {
   }
 
   function onMongoConnected(database) {
-    addRoom(database.db(), req.body.name, req.auth.user, function(name) {
+    // Mongo query
+    addRoom(database.db(), truncateName(req.body.name), req.auth.user, function(name) {
       if (!name) {
         next(createError("Couldn't create a room", 404));
         return;

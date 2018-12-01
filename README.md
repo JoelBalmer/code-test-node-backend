@@ -46,6 +46,7 @@ https://github.com/expressjs/express/blob/master/examples/route-separation/index
 9. ~~Add air bnb style jsvscript guide~~
 10. ~~Modularise adding usage~~
 11. ~~Make users JSON list in config~~
+12. ~~Truncate name~~
 
 # Improvements
 1. Move users to a database instead of a JSON list

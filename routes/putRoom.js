@@ -3,6 +3,7 @@ var setAvailability = require('./../queries/putRoomAvailability');
 var setName = require('./../queries/putRoomName');
 var createError = require("./../utils/createError");
 var allAdmins = require("./../users").admins;
+var truncateName = require("./../utils/truncateName");
 
 module.exports = function setRoomRoute(req, res, next) {
   // Check values are supplied
@@ -54,7 +55,7 @@ function setAvailabilityRoute(req, res, next) {
 function setNameRoute(req, res, next) {
   function onMongoConnected(database) {
     // Mongo query
-    setName(database.db(), req.params.id, req.body.name, req.auth.user, function(room) {
+    setName(database.db(), req.params.id, truncateName(req.body.name), req.auth.user, function(room) {
       if (!room) {
         next(createError("Couldn't set room name", 404));  
         return;
