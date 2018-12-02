@@ -53,5 +53,3 @@ app.use(notFound404Handler);
 function notFound404Handler(req, res, next) {
   res.status(404).json({ message: "Sorry can't find that!" });
 }
-
-module.exports = app;

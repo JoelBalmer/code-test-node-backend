@@ -11,4 +11,4 @@ module.exports = function insertUsage(db, usage, callback) {
     // Finish with callback
     callback();
   });
-}
+};

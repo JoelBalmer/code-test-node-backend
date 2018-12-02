@@ -49,4 +49,4 @@ module.exports = function addRoom(db, name, user, callback) {
       }
     );
   });
-}
+};

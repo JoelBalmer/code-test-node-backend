@@ -37,4 +37,4 @@ module.exports = function setName(db, id, name, user, callback) {
       });
     }
   );
-}
+};
