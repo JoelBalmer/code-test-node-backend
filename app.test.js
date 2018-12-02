@@ -1,6 +1,7 @@
 var request = require("supertest");
 var app = require("./app");
 
+// Test route
 describe("Testing /api/test/", function () {
     it("Respond with: Test worked!", function(done) {
         request(app)
@@ -9,6 +10,29 @@ describe("Testing /api/test/", function () {
     });
 });
 
+// Test Unauthorised
+describe("Testing /api/room/ with invalid user", function () {
+    it("Respond with json containing a list of all rooms", function(done) {
+        request(app)
+            .get("/api/room/")
+            .set("Authorization", "Basic blabh")
+            .expect('Content-Type', /json/)
+            .expect(401, done());
+    });
+});
+
+// Test invalid URL
+describe("Testing /api/blah/ with invalid user", function () {
+    it("Respond with json containing a list of all rooms", function(done) {
+        request(app)
+            .get("/api/blah/")
+            .set("Authorization", "Basic cm9vdDpzdXBlcnN1cGVyc2VjcmV0")
+            .expect('Content-Type', /json/)
+            .expect(404, done());
+    });
+});
+
+// Testing get routes
 describe("Testing /api/room/", function () {
     it("Respond with json containing a list of all rooms", function(done) {
         request(app)
